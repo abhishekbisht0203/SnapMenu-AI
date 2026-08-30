@@ -12,6 +12,8 @@ pest()->extend(TestCase::class)
     ->beforeEach(fn () => $this->seed(RoleSeeder::class))
     ->in('Feature');
 
+pest()->extend(TestCase::class)->in('Unit');
+
 expect()->extend('toBeOne', function () {
     return $this->toBe(1);
 });
