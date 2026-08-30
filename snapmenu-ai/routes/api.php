@@ -37,6 +37,9 @@ Route::get('/orders/track/{trackingToken}', [PublicOrderController::class, 'trac
 
 Route::post('/webhooks/stripe', StripeWebhookController::class);
 
+// QR image for a table (the encoded URL is not sensitive).
+Route::get('/tables/qr/{token}', [TableController::class, 'publicQr'])->name('tables.qr');
+
 /*
  * Owner / staff dashboard API. Every route is tenant-scoped via `restaurant`.
  */
@@ -77,6 +80,6 @@ Route::middleware(['auth:sanctum', 'restaurant'])->group(function () {
         Route::post('/tables', [TableController::class, 'store']);
         Route::match(['put', 'patch'], '/tables/{table}', [TableController::class, 'update']);
         Route::delete('/tables/{table}', [TableController::class, 'destroy']);
-        Route::get('/tables/{table}/qr', [TableController::class, 'qr'])->name('tables.qr');
+        Route::get('/tables/{table}/qr', [TableController::class, 'qr']);
     });
 });

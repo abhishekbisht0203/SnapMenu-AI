@@ -48,10 +48,24 @@ class TableController extends Controller
 
     public function qr(int $table): Response
     {
-        $model = $this->find($table);
+        return $this->svgResponse($this->find($table));
+    }
 
+    /**
+     * Public QR image endpoint — the encoded menu URL is not sensitive, and an
+     * <img> tag cannot send an auth header.
+     */
+    public function publicQr(string $token): Response
+    {
+        $model = Table::query()->withoutTenancy()->where('qr_code_token', $token)->firstOrFail();
+
+        return $this->svgResponse($model);
+    }
+
+    private function svgResponse(Table $table): Response
+    {
         return response(
-            $this->qr->svgFor($model->restaurant, $model),
+            $this->qr->svgFor($table->restaurant, $table),
             200,
             ['Content-Type' => 'image/svg+xml']
         );

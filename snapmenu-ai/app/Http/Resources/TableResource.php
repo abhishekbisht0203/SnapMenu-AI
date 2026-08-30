@@ -21,7 +21,7 @@ class TableResource extends JsonResource
             'label' => $this->label,
             'qr_code_token' => $this->qr_code_token,
             'menu_url' => $qr->urlFor($this->restaurant, $this->resource),
-            'qr_svg_url' => route('tables.qr', ['table' => $this->id]),
+            'qr_svg_url' => route('tables.qr', ['token' => $this->qr_code_token]),
         ];
     }
 }
