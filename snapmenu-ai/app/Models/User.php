@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -47,5 +49,25 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function ownedRestaurant(): HasOne
+    {
+        return $this->hasOne(Restaurant::class, 'owner_user_id');
+    }
+
+    public function restaurants(): BelongsToMany
+    {
+        return $this->belongsToMany(Restaurant::class, 'restaurant_staff')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * The restaurant this user acts within (owner's own, else first staffed).
+     */
+    public function currentRestaurant(): ?Restaurant
+    {
+        return $this->ownedRestaurant()->first() ?? $this->restaurants()->first();
     }
 }

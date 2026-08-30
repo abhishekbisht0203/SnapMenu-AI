@@ -2,24 +2,35 @@
 
 namespace App\Services;
 
+use App\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
     /**
-     * @param  array{name: string, email: string, password: string}  $data
+     * @param  array{name: string, email: string, password: string, restaurant_name: string}  $data
      */
     public function register(array $data): array
     {
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-        ]);
+        $user = DB::transaction(function () use ($data) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+            ]);
 
-        $user->assignRole('Owner');
+            $user->assignRole('Owner');
+
+            Restaurant::create([
+                'owner_user_id' => $user->id,
+                'name' => $data['restaurant_name'],
+            ]);
+
+            return $user;
+        });
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
