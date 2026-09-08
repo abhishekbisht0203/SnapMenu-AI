@@ -10,6 +10,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        index: resolve(__dirname, 'index.html'),
         owner: resolve(__dirname, 'owner.html'),
         customer: resolve(__dirname, 'customer.html'),
       },
