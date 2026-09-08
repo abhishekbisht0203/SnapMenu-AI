@@ -6,8 +6,13 @@ import { UploadTab } from './UploadTab';
 import { TablesTab } from './TablesTab';
 import { KitchenTab } from './KitchenTab';
 
-const TABS = ['Kitchen', 'Menu', 'Upload', 'Tables'] as const;
-type Tab = (typeof TABS)[number];
+const TABS = [
+  { key: 'Kitchen', icon: '🔥' },
+  { key: 'Menu', icon: '📋' },
+  { key: 'Upload', icon: '✨' },
+  { key: 'Tables', icon: '🍽️' },
+] as const;
+type Tab = (typeof TABS)[number]['key'];
 
 export function App() {
   const [authed, setAuthed] = useState<boolean>(!!localStorage.getItem('snapmenu_token'));
@@ -31,35 +36,47 @@ export function App() {
   if (!authed) return <Login onAuthed={() => setAuthed(true)} />;
 
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">SnapMenu AI</h1>
-          {restaurant && <p className="text-sm text-gray-500">{restaurant.name}</p>}
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-radial text-sm font-black text-white">
+              S
+            </div>
+            <div>
+              <p className="font-display text-sm font-bold leading-none">SnapMenu AI</p>
+              {restaurant && <p className="text-xs text-slate-500">{restaurant.name}</p>}
+            </div>
+          </div>
+          <button onClick={logout} className="btn-ghost !px-3 !py-1.5 text-xs">
+            Log out
+          </button>
         </div>
-        <button onClick={logout} className="text-sm text-gray-500 underline">
-          Log out
-        </button>
+        <nav className="mx-auto flex max-w-6xl gap-1 px-2 sm:px-5">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold transition ${
+                tab === t.key ? 'text-ink' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <span>{t.icon}</span>
+              {t.key}
+              {tab === t.key && (
+                <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-ember" />
+              )}
+            </button>
+          ))}
+        </nav>
       </header>
 
-      <nav className="mb-6 flex gap-1 border-b">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium ${
-              tab === t ? 'border-b-2 border-brand-accent text-brand' : 'text-gray-500'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </nav>
-
-      {tab === 'Kitchen' && <KitchenTab />}
-      {tab === 'Menu' && <MenuTab />}
-      {tab === 'Upload' && <UploadTab />}
-      {tab === 'Tables' && <TablesTab />}
+      <main className="mx-auto max-w-6xl animate-fade-up px-4 py-6 sm:px-6 sm:py-8">
+        {tab === 'Kitchen' && <KitchenTab />}
+        {tab === 'Menu' && <MenuTab />}
+        {tab === 'Upload' && <UploadTab />}
+        {tab === 'Tables' && <TablesTab />}
+      </main>
     </div>
   );
 }
