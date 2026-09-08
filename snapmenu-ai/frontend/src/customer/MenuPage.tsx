@@ -120,7 +120,7 @@ export function MenuPage() {
               style={{ animationDelay: `${idx * 30}ms` }}
             >
               <div className="flex-1">
-                <p className="font-semibold text-ink">{i.name}</p>
+                <p className="font-semibold text-slate-900">{i.name}</p>
                 {i.description && (
                   <p className="mt-0.5 text-sm leading-snug text-slate-500">{i.description}</p>
                 )}
@@ -171,7 +171,7 @@ export function MenuPage() {
           <button
             disabled={placing}
             onClick={placeOrder}
-            className="flex w-full items-center justify-between rounded-2xl px-5 py-3.5 font-bold text-white shadow-glow transition active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-2xl px-5 py-3.5 font-bold text-white shadow-lg transition active:scale-[0.99] disabled:opacity-60"
             style={{ background: accent }}
           >
             <span>{placing ? 'Placing…' : 'Place order'}</span>

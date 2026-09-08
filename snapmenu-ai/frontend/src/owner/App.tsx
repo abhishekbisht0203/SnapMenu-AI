@@ -1,82 +1,158 @@
-import { useEffect, useState } from 'react';
-import { ownerApi } from '../lib/api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ownerApi, friendlyError, unwrap, type Me, type Restaurant } from '../lib/api';
+import { useToast } from '../ui';
 import { Login } from './Login';
-import { MenuTab } from './MenuTab';
-import { UploadTab } from './UploadTab';
-import { TablesTab } from './TablesTab';
-import { KitchenTab } from './KitchenTab';
-
-const TABS = [
-  { key: 'Kitchen', icon: '🔥' },
-  { key: 'Menu', icon: '📋' },
-  { key: 'Upload', icon: '✨' },
-  { key: 'Tables', icon: '🍽️' },
-] as const;
-type Tab = (typeof TABS)[number]['key'];
+import { Shell } from './Shell';
+import { OrdersProvider, useOrders, ACTIVE_STATUSES } from './ordersContext';
+import { sectionFromHash, SECTIONS, type SectionKey } from './nav';
+import { OverviewSection } from './sections/OverviewSection';
+import { KitchenSection } from './sections/KitchenSection';
+import { MenuSection } from './sections/MenuSection';
+import { ImportSection } from './sections/ImportSection';
+import { TablesSection } from './sections/TablesSection';
+import { SettingsModal } from './sections/SettingsModal';
+import { BootScreen } from './sections/BootScreen';
 
 export function App() {
-  const [authed, setAuthed] = useState<boolean>(!!localStorage.getItem('snapmenu_token'));
-  const [restaurant, setRestaurant] = useState<{ name: string; slug: string } | null>(null);
-  const [tab, setTab] = useState<Tab>('Kitchen');
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('snapmenu_token'));
+  const [me, setMe] = useState<Me | null>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const toast = useToast();
+
+  const logout = useCallback(() => {
+    ownerApi.post('/auth/logout').catch(() => {});
+    localStorage.removeItem('snapmenu_token');
+    setToken(null);
+    setMe(null);
+    setRestaurant(null);
+  }, []);
+
+  const bootstrap = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const [meRes, restRes] = await Promise.all([
+        ownerApi.get('/auth/me'),
+        ownerApi.get('/restaurant'),
+      ]);
+      setMe(meRes.data.user);
+      setRestaurant(unwrap(restRes));
+      setStatus('ready');
+    } catch (e) {
+      if ((e as any)?.response?.status === 401) {
+        localStorage.removeItem('snapmenu_token');
+        setToken(null);
+      } else {
+        setStatus('error');
+        toast.error(friendlyError(e));
+      }
+    }
+  }, [toast]);
 
   useEffect(() => {
-    if (!authed) return;
-    ownerApi
-      .get('/restaurant')
-      .then((r) => setRestaurant(r.data.data))
-      .catch(() => logout());
-  }, [authed]);
+    if (token) bootstrap();
+  }, [token, bootstrap]);
 
-  const logout = () => {
-    localStorage.removeItem('snapmenu_token');
-    setAuthed(false);
-    setRestaurant(null);
-  };
+  useEffect(() => {
+    const onUnauthorized = () => {
+      setToken(null);
+      setMe(null);
+      setRestaurant(null);
+    };
+    window.addEventListener('snapmenu:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('snapmenu:unauthorized', onUnauthorized);
+  }, []);
 
-  if (!authed) return <Login onAuthed={() => setAuthed(true)} />;
+  if (!token) return <Login onAuthed={(t) => setToken(t)} />;
+  if (status !== 'ready') return <BootScreen error={status === 'error'} onRetry={bootstrap} />;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-radial text-sm font-black text-white">
-              S
-            </div>
-            <div>
-              <p className="font-display text-sm font-bold leading-none">SnapMenu AI</p>
-              {restaurant && <p className="text-xs text-slate-500">{restaurant.name}</p>}
-            </div>
-          </div>
-          <button onClick={logout} className="btn-ghost !px-3 !py-1.5 text-xs">
-            Log out
-          </button>
-        </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 px-2 sm:px-5">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold transition ${
-                tab === t.key ? 'text-ink' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              <span>{t.icon}</span>
-              {t.key}
-              {tab === t.key && (
-                <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-ember" />
-              )}
-            </button>
-          ))}
-        </nav>
-      </header>
+    <OrdersProvider>
+      <Dashboard
+        me={me}
+        restaurant={restaurant}
+        onLogout={logout}
+        onRestaurantUpdated={setRestaurant}
+      />
+    </OrdersProvider>
+  );
+}
 
-      <main className="mx-auto max-w-6xl animate-fade-up px-4 py-6 sm:px-6 sm:py-8">
-        {tab === 'Kitchen' && <KitchenTab />}
-        {tab === 'Menu' && <MenuTab />}
-        {tab === 'Upload' && <UploadTab />}
-        {tab === 'Tables' && <TablesTab />}
-      </main>
-    </div>
+function Dashboard({
+  me,
+  restaurant,
+  onLogout,
+  onRestaurantUpdated,
+}: {
+  me: Me | null;
+  restaurant: Restaurant | null;
+  onLogout: () => void;
+  onRestaurantUpdated: (r: Restaurant) => void;
+}) {
+  const isOwner = !!me?.roles.includes('Owner');
+  const { orders } = useOrders();
+  const [section, setSection] = useState<SectionKey>(sectionFromHash);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const go = useCallback(
+    (s: SectionKey) => {
+      const allowed = SECTIONS.find((x) => x.key === s && (!x.ownerOnly || isOwner));
+      const next = allowed ? s : 'overview';
+      setSection(next);
+      window.location.hash = `/${next}`;
+    },
+    [isOwner],
+  );
+
+  useEffect(() => {
+    const onHash = () => setSection(sectionFromHash());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Guard against a staff member deep-linking to an owner-only section.
+  useEffect(() => {
+    const cfg = SECTIONS.find((s) => s.key === section);
+    if (cfg?.ownerOnly && !isOwner) go('overview');
+  }, [section, isOwner, go]);
+
+  const readyCount = useMemo(
+    () => orders.filter((o) => o.status === 'ready').length,
+    [orders],
+  );
+  const activeCount = useMemo(
+    () => orders.filter((o) => ACTIVE_STATUSES.includes(o.status)).length,
+    [orders],
+  );
+
+  return (
+    <>
+      <Shell
+        me={me}
+        restaurant={restaurant}
+        section={section}
+        onSection={go}
+        readyCount={readyCount}
+        onLogout={onLogout}
+        onSettings={() => setSettingsOpen(true)}
+      >
+        {section === 'overview' && (
+          <OverviewSection isOwner={isOwner} restaurant={restaurant} onNavigate={go} activeCount={activeCount} />
+        )}
+        {section === 'kitchen' && <KitchenSection />}
+        {section === 'menu' && <MenuSection isOwner={isOwner} />}
+        {section === 'import' && isOwner && <ImportSection onNavigate={go} />}
+        {section === 'tables' && isOwner && <TablesSection />}
+      </Shell>
+
+      {restaurant && (
+        <SettingsModal
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          restaurant={restaurant}
+          onSaved={onRestaurantUpdated}
+        />
+      )}
+    </>
   );
 }

@@ -1,61 +1,134 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------ *
+ * Design tokens — every color the app uses resolves to one of these. *
+ * Channels are space-separated RGB so Tailwind can apply alpha.       *
+ * ------------------------------------------------------------------ */
+:root {
+  --c-bg: 247 248 250;
+  --c-surface: 255 255 255;
+  --c-surface-2: 248 250 252;
+  --c-surface-3: 241 245 249;
+  --c-line: 226 232 240;
+  --c-line-strong: 203 213 225;
+  --c-text: 15 23 42;
+  --c-text-muted: 71 85 105;
+  --c-text-subtle: 148 163 184;
+  --c-brand: 13 148 136;
+  --c-brand-fg: 255 255 255;
+  --c-brand-soft: 204 251 241;
+  --c-accent: 234 88 12;
+  --c-accent-fg: 255 255 255;
+  --c-accent-soft: 255 237 213;
+  --c-success: 22 163 74;
+  --c-success-soft: 220 252 231;
+  --c-warning: 217 119 6;
+  --c-warning-soft: 254 243 199;
+  --c-danger: 220 38 38;
+  --c-danger-soft: 254 226 226;
+  --c-info: 37 99 235;
+  --c-info-soft: 219 234 254;
+  --c-shadow: 15 23 42;
+  color-scheme: light;
+}
+
+.dark {
+  --c-bg: 9 11 16;
+  --c-surface: 20 24 33;
+  --c-surface-2: 26 31 42;
+  --c-surface-3: 33 39 52;
+  --c-line: 39 46 61;
+  --c-line-strong: 55 65 84;
+  --c-text: 237 240 245;
+  --c-text-muted: 158 168 184;
+  --c-text-subtle: 110 121 140;
+  --c-brand: 45 212 191;
+  --c-brand-fg: 4 20 18;
+  --c-brand-soft: 12 46 44;
+  --c-accent: 251 146 60;
+  --c-accent-fg: 30 14 3;
+  --c-accent-soft: 51 28 10;
+  --c-success: 74 222 128;
+  --c-success-soft: 12 43 26;
+  --c-warning: 251 191 36;
+  --c-warning-soft: 48 34 8;
+  --c-danger: 248 113 113;
+  --c-danger-soft: 51 20 20;
+  --c-info: 96 165 250;
+  --c-info-soft: 15 33 61;
+  --c-shadow: 0 0 0;
+  color-scheme: dark;
+}
+
 @layer base {
+  * {
+    border-color: rgb(var(--c-line));
+  }
   html {
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    background-color: rgb(var(--c-bg));
+    color: rgb(var(--c-text));
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   ::selection {
-    background: #ccfbf1;
-    color: #134e4a;
+    background: rgb(var(--c-brand) / 0.25);
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-brand));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  h1, h2, h3, h4 {
+    letter-spacing: -0.014em;
   }
 }
 
 @layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
-      transition-all duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  .surface-card {
+    @apply rounded-xl border border-line bg-surface shadow-xs;
   }
-  .btn-primary {
-    @apply btn bg-slate-900 text-white shadow-sm hover:bg-slate-800;
+  .hairline {
+    @apply border-line;
   }
-  .btn-accent {
-    @apply btn text-white shadow-glow;
-    background-color: #f97316;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-  .btn-accent:hover {
-    background-color: #ea580c;
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-  .btn-ghost {
-    @apply btn bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50;
+  .stagger > * {
+    animation: fade-up 0.3s ease-out both;
   }
-  .card {
-    @apply rounded-2xl bg-white shadow-card ring-1 ring-slate-100;
-  }
-  .field {
-    @apply w-full rounded-xl border-0 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-900
-      ring-1 ring-inset ring-transparent transition
-      placeholder:text-slate-400 focus:bg-white focus:outline-none;
-  }
-  .field:focus {
-    box-shadow: 0 0 0 2px #14b8a6;
-  }
-  .chip {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-  }
-  .skeleton {
-    @apply relative overflow-hidden bg-slate-200/70;
-  }
-  .skeleton::after {
-    @apply absolute inset-0 -translate-x-full animate-shimmer
-      bg-gradient-to-r from-transparent via-white/60 to-transparent;
-    content: '';
+  .stagger > *:nth-child(1) { animation-delay: 20ms; }
+  .stagger > *:nth-child(2) { animation-delay: 45ms; }
+  .stagger > *:nth-child(3) { animation-delay: 70ms; }
+  .stagger > *:nth-child(4) { animation-delay: 95ms; }
+  .stagger > *:nth-child(5) { animation-delay: 120ms; }
+  .stagger > *:nth-child(6) { animation-delay: 145ms; }
+  .stagger > *:nth-child(7) { animation-delay: 170ms; }
+  .stagger > *:nth-child(8) { animation-delay: 195ms; }
+}
+
+/* Honour the OS "reduce motion" setting everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

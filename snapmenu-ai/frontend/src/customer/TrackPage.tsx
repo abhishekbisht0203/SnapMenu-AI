@@ -36,7 +36,7 @@ export function TrackPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-white shadow-xl">
-      <header className="bg-brand-radial px-6 pb-10 pt-12 text-white">
+      <header className="bg-teal-700 px-6 pb-10 pt-12 text-white">
         <p className="text-xs font-medium uppercase tracking-widest text-white/70">Live order status</p>
         <h1 className="mt-1 font-display text-3xl font-extrabold">Order #{order.id}</h1>
         <p className="mt-1 text-sm text-white/80">
@@ -62,13 +62,13 @@ export function TrackPage() {
                       done
                         ? 'bg-brand text-white'
                         : active
-                          ? 'bg-ember text-white'
+                          ? 'bg-orange-500 text-white'
                           : 'bg-slate-200 text-slate-500'
                     } ${active ? 'animate-pulse' : ''}`}
                   >
                     {done ? '✓' : idx + 1}
                   </span>
-                  <p className={`font-semibold ${idx <= currentStep ? 'text-ink' : 'text-slate-400'}`}>
+                  <p className={`font-semibold ${idx <= currentStep ? 'text-slate-900' : 'text-slate-400'}`}>
                     {step.label}
                   </p>
                   <p className="text-xs text-slate-400">{step.hint}</p>
@@ -84,7 +84,7 @@ export function TrackPage() {
         <ul className="divide-y divide-slate-100 rounded-2xl bg-slate-50 px-4 ring-1 ring-slate-100">
           {order.items.map((i) => (
             <li key={i.id} className="flex justify-between py-3 text-sm">
-              <span className="font-medium text-ink">
+              <span className="font-medium text-slate-900">
                 {i.quantity}× {i.name ?? `Item ${i.id}`}
               </span>
               <span className="text-slate-500">${(i.unit_price * i.quantity).toFixed(2)}</span>
@@ -94,7 +94,7 @@ export function TrackPage() {
 
         <Link
           to={`/r/demo-bistro`}
-          className="mt-8 block text-center text-sm font-medium text-brand-700 hover:underline"
+          className="mt-8 block text-center text-sm font-medium text-teal-700 hover:underline"
         >
           ← Back to menu
         </Link>
