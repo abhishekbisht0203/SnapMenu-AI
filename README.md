@@ -67,6 +67,8 @@ vendor/bin/pint --test    # style
 
 External services (LLM, OCR, Stripe, broadcasting) are faked in the test suite.
 
+Build by Abhishek Bisht
+
 ## Remaining before a live demo
 
 - Deploy (Railway/Render) with a Supervisor-managed queue worker and Reverb server.
